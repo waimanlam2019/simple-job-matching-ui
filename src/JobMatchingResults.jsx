@@ -5,6 +5,7 @@ function JobMatchingResults() {
   const [results, setResults] = useState([]);
   const [filteredResults, setFilteredResults] = useState([]);
   const [jobTypeFilter, setJobTypeFilter] = useState("All");
+  const [shortlistFilter, setShortlistFilter] = useState("All"); // New filter
 
   useEffect(() => {
     fetch("http://localhost:8080/api/matchingresults")
@@ -17,28 +18,49 @@ function JobMatchingResults() {
   }, []);
 
   useEffect(() => {
-    if (jobTypeFilter === "All") {
-      setFilteredResults(results);
-    } else {
-      setFilteredResults(results.filter((job) => job.jobType === jobTypeFilter));
+    let filtered = results;
+
+    if (jobTypeFilter !== "All") {
+      filtered = filtered.filter((job) => job.jobType === jobTypeFilter);
     }
-  }, [jobTypeFilter, results]);
+
+    if (shortlistFilter === "Shortlisted") {
+      filtered = filtered.filter((job) => job.shortlistFlag === true);
+    } else if (shortlistFilter === "Not Shortlisted") {
+      filtered = filtered.filter((job) => job.shortlistFlag === false);
+    }
+
+    setFilteredResults(filtered);
+  }, [jobTypeFilter, shortlistFilter, results]);
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial" }}>
       <h1>AI Job Matching Results</h1>
 
-      {/* Dropdown filter */}
+      {/* Job Type Filter */}
       <label htmlFor="jobTypeFilter">Filter by Job Type: </label>
       <select
         id="jobTypeFilter"
         value={jobTypeFilter}
         onChange={(e) => setJobTypeFilter(e.target.value)}
-        style={{ marginBottom: "15px", marginLeft: "10px" }}
+        style={{ marginBottom: "15px", marginLeft: "10px", marginRight: "20px" }}
       >
         <option value="All">All</option>
         <option value="Full time">Full time</option>
         <option value="Part time">Part time</option>
+      </select>
+
+      {/* Shortlist Filter */}
+      <label htmlFor="shortlistFilter">Filter by Shortlist: </label>
+      <select
+        id="shortlistFilter"
+        value={shortlistFilter}
+        onChange={(e) => setShortlistFilter(e.target.value)}
+        style={{ marginBottom: "15px", marginLeft: "10px" }}
+      >
+        <option value="All">All</option>
+        <option value="Shortlisted">Shortlisted</option>
+        <option value="Not Shortlisted">Not Shortlisted</option>
       </select>
 
       {filteredResults.length === 0 ? (
