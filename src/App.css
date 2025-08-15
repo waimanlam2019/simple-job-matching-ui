@@ -85,7 +85,3 @@ tr {
 td {
   transition: transform 0.1s ease-in-out;
 }
-
-tr:hover td {
-  transform: scale(1.02);
-}
