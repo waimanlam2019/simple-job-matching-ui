@@ -4,8 +4,9 @@ import ReactMarkdown from "react-markdown";
 function JobMatchingResults() {
   const [results, setResults] = useState([]);
   const [filteredResults, setFilteredResults] = useState([]);
+  const [expandedJobs, setExpandedJobs] = useState({});
   const [jobTypeFilter, setJobTypeFilter] = useState("All");
-  const [shortlistFilter, setShortlistFilter] = useState("All"); // New filter
+  const [shortlistFilter, setShortlistFilter] = useState("All");
 
   useEffect(() => {
     fetch("http://localhost:8080/api/matchingresults")
@@ -33,6 +34,21 @@ function JobMatchingResults() {
     setFilteredResults(filtered);
   }, [jobTypeFilter, shortlistFilter, results]);
 
+  // Group results by unique job (title + company + url as a key)
+  const groupedResults = filteredResults.reduce((acc, result) => {
+    const key = `${result.title}-${result.company}-${result.url}`;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(result);
+    return acc;
+  }, {});
+
+  const toggleExpand = (key) => {
+    setExpandedJobs((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
   return (
     <div style={{ padding: "20px", fontFamily: "Arial" }}>
       <h1>AI Job Matching Results</h1>
@@ -47,6 +63,7 @@ function JobMatchingResults() {
       >
         <option value="All">All</option>
         <option value="Full time">Full time</option>
+        <option value="Contract/Temp">Contract/Temp</option>
         <option value="Part time">Part time</option>
       </select>
 
@@ -63,39 +80,64 @@ function JobMatchingResults() {
         <option value="Not Shortlisted">Not Shortlisted</option>
       </select>
 
-      {filteredResults.length === 0 ? (
+      {Object.keys(groupedResults).length === 0 ? (
         <p>No matching results found.</p>
       ) : (
-        <table border="1" cellPadding="8" cellSpacing="0">
+        <table border="1" cellPadding="8" cellSpacing="0" width="100%">
           <thead>
             <tr>
+              <th></th>
               <th>Date</th>
               <th>Title</th>
               <th>Company</th>
               <th>URL</th>
-              <th>AI Model</th>
               <th>Shortlist</th>
-              <th>Verdict</th>
             </tr>
           </thead>
           <tbody>
-            {filteredResults.map((result, index) => (
-              <tr key={index}>
-                <td>{result.createdAt}</td>
-                <td>{result.title}</td>
-                <td>{result.company}</td>
-                <td>
-                  <a href={result.url} target="_blank" rel="noopener noreferrer">
-                    Link
-                  </a>
-                </td>
-                <td>{result.aiModel}</td>
-                <td>{result.shortlistFlag ? "✅" : "❌"}</td>
-                <td>
-                  <ReactMarkdown>{result.verdict}</ReactMarkdown>
-                </td>
-              </tr>
-            ))}
+            {Object.entries(groupedResults).map(([key, reviews]) => {
+              const first = reviews[0]; // show base info
+              return (
+                <React.Fragment key={key}>
+                  {/* Parent row */}
+                  <tr>
+                    <td>
+                      <button onClick={() => toggleExpand(key)}>
+                        {expandedJobs[key] ? "−" : "+"}
+                      </button>
+                    </td>
+                    <td>{first.createdAt}</td>
+                    <td>{first.title}</td>
+                    <td>{first.company}</td>
+                    <td>
+                      <a
+                        href={first.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Link
+                      </a>
+                    </td>
+                    <td>
+                      {reviews.some((r) => r.shortlistFlag) ? "✅" : "❌"}
+                    </td>
+                  </tr>
+
+                  {/* Expanded rows */}
+                  {expandedJobs[key] &&
+                    reviews.map((r, i) => (
+                      <tr key={i} style={{ backgroundColor: "#f9f9f9" }}>
+                        <td></td>
+                        <td colSpan="2">AI Model: {r.aiModel}</td>
+                        <td>Shortlist: {r.shortlistFlag ? "✅" : "❌"}</td>
+                        <td colSpan="2">
+                          <ReactMarkdown>{r.verdict}</ReactMarkdown>
+                        </td>
+                      </tr>
+                    ))}
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
       )}
