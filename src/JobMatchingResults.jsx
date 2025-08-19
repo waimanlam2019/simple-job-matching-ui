@@ -6,7 +6,7 @@ function JobMatchingResults() {
   const [expandedJobs, setExpandedJobs] = useState({});
   const [filters, setFilters] = useState({
     jobType: "All",
-    minVotes: 0,
+    minVotes: 5,
   });
 
   useEffect(() => {
@@ -15,6 +15,19 @@ function JobMatchingResults() {
       .then(setResults)
       .catch((err) => console.error("Error fetching data:", err));
   }, []);
+
+  // Helper to format dates as "Today", "1 day ago", "X days ago"
+  const formatDaysAgo = (dateString) => {
+    const today = new Date();
+    const date = new Date(dateString);
+    today.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
+    const diffTime = today - date;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "1 day ago";
+    return `${diffDays} days ago`;
+  };
 
   // Filtered, grouped, and minimum vote applied
   const groupedResults = useMemo(() => {
@@ -104,7 +117,7 @@ function JobMatchingResults() {
                         {expandedJobs[key] ? "−" : "+"}
                       </button>
                     </td>
-                    <td>{first.createdAt}</td>
+                    <td>{formatDaysAgo(first.createdAt)}</td>
                     <td>{first.title}</td>
                     <td>{first.company}</td>
                     <td>
@@ -121,7 +134,7 @@ function JobMatchingResults() {
                   {expandedJobs[key] && reviews.map((r, i) => (
                     <tr key={i} style={{ backgroundColor: "#f9f9f9" }}>
                       <td></td>
-                      <td>{r.createdAt}</td>
+                      <td>{formatDaysAgo(r.createdAt)}</td>
                       <td>{r.title}</td>
                       <td>{r.company}</td>
                       <td>
