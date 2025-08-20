@@ -19,13 +19,26 @@ function JobMatchingResults() {
   // Trigger batch job
   const triggerJobMatching = async () => {
     try {
-      await fetch("http://localhost:8080/api/dojobmatching", {
+      await fetch("http://localhost:8080/api/startjobmatching", {
         method: "POST",
       });
       alert("Job matching triggered ✅");
     } catch (err) {
       console.error("Error triggering job matching:", err);
       alert("Failed to trigger job matching ❌");
+    }
+  };
+
+  // Stop batch job
+  const stopJobMatching = async () => {
+    try {
+      await fetch("http://localhost:8080/api/stopjobmatching", {
+        method: "POST",
+      });
+      alert("Job matching stopped ⏹️");
+    } catch (err) {
+      console.error("Error stopping job matching:", err);
+      alert("Failed to stop job matching ❌");
     }
   };
 
@@ -68,13 +81,21 @@ function JobMatchingResults() {
 
   return (
     <div style={{ padding: 20, fontFamily: "Arial" }}>
-      {/* Button at top left */}
-      <button
-        onClick={triggerJobMatching}
-        style={{ marginBottom: 20, padding: "8px 12px", cursor: "pointer" }}
-      >
-        Run Job Matching
-      </button>
+      {/* Control buttons at top left */}
+      <div style={{ marginBottom: 20 }}>
+        <button
+          onClick={triggerJobMatching}
+          style={{ marginRight: 10, padding: "8px 12px", cursor: "pointer" }}
+        >
+          ▶ Run Job Matching
+        </button>
+        <button
+          onClick={stopJobMatching}
+          style={{ padding: "8px 12px", cursor: "pointer" }}
+        >
+          ⏹ Stop Job Matching
+        </button>
+      </div>
 
       <h1>AI Job Matching Results</h1>
 
