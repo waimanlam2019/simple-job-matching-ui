@@ -6,7 +6,7 @@ function JobMatchingResults() {
   const [expandedJobs, setExpandedJobs] = useState({});
   const [filters, setFilters] = useState({
     jobType: "All",
-    minVotes: 5,
+    minVotes: 3,
   });
 
   useEffect(() => {
@@ -15,6 +15,19 @@ function JobMatchingResults() {
       .then(setResults)
       .catch((err) => console.error("Error fetching data:", err));
   }, []);
+
+  // Trigger batch job
+  const triggerJobMatching = async () => {
+    try {
+      await fetch("http://localhost:8080/api/dojobmatching", {
+        method: "POST",
+      });
+      alert("Job matching triggered ✅");
+    } catch (err) {
+      console.error("Error triggering job matching:", err);
+      alert("Failed to trigger job matching ❌");
+    }
+  };
 
   // Helper to format dates as "Today", "1 day ago", "X days ago"
   const formatDaysAgo = (dateString) => {
@@ -32,7 +45,8 @@ function JobMatchingResults() {
   // Filtered, grouped, and minimum vote applied
   const groupedResults = useMemo(() => {
     const filtered = results.filter((job) => {
-      if (filters.jobType !== "All" && job.jobType !== filters.jobType) return false;
+      if (filters.jobType !== "All" && job.jobType !== filters.jobType)
+        return false;
       return true;
     });
 
@@ -44,7 +58,8 @@ function JobMatchingResults() {
     }, {});
 
     return Object.entries(grouped).filter(
-      ([_, reviews]) => reviews.filter(r => r.shortlistFlag).length >= filters.minVotes
+      ([_, reviews]) =>
+        reviews.filter((r) => r.shortlistFlag).length >= filters.minVotes
     );
   }, [results, filters]);
 
@@ -53,6 +68,14 @@ function JobMatchingResults() {
 
   return (
     <div style={{ padding: 20, fontFamily: "Arial" }}>
+      {/* Button at top left */}
+      <button
+        onClick={triggerJobMatching}
+        style={{ marginBottom: 20, padding: "8px 12px", cursor: "pointer" }}
+      >
+        Run Job Matching
+      </button>
+
       <h1>AI Job Matching Results</h1>
 
       {/* Filters */}
@@ -61,7 +84,9 @@ function JobMatchingResults() {
           Job Type:
           <select
             value={filters.jobType}
-            onChange={(e) => setFilters({ ...filters, jobType: e.target.value })}
+            onChange={(e) =>
+              setFilters({ ...filters, jobType: e.target.value })
+            }
             style={{ marginLeft: 10, marginRight: 20 }}
           >
             <option>All</option>
@@ -80,8 +105,10 @@ function JobMatchingResults() {
             }
             style={{ marginLeft: 10 }}
           >
-            {[0,1,2,3,4,5,6,7].map((n) => (
-              <option key={n} value={n}>{n}+</option>
+            {[0, 1, 2, 3, 4, 5, 6, 7].map((n) => (
+              <option key={n} value={n}>
+                {n}+
+              </option>
             ))}
           </select>
         </label>
@@ -107,7 +134,7 @@ function JobMatchingResults() {
           <tbody>
             {groupedResults.map(([key, reviews]) => {
               const first = reviews[0];
-              const votes = reviews.filter(r => r.shortlistFlag).length;
+              const votes = reviews.filter((r) => r.shortlistFlag).length;
 
               return (
                 <React.Fragment key={key}>
@@ -121,32 +148,43 @@ function JobMatchingResults() {
                     <td>{first.title}</td>
                     <td>{first.company}</td>
                     <td>
-                      <a href={first.url} target="_blank" rel="noopener noreferrer">
+                      <a
+                        href={first.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         Link
                       </a>
                     </td>
-                    <td>—</td> {/* placeholder */}
-                    <td>—</td> {/* placeholder */}
+                    <td>—</td>
+                    <td>—</td>
                     <td>{votes > 0 ? "✅" : "❌"}</td>
                   </tr>
 
                   {/* Expanded rows with AI Model and Verdict */}
-                  {expandedJobs[key] && reviews.map((r, i) => (
-                    <tr key={i} style={{ backgroundColor: "#f9f9f9" }}>
-                      <td></td>
-                      <td>{formatDaysAgo(r.createdAt)}</td>
-                      <td>{r.title}</td>
-                      <td>{r.company}</td>
-                      <td>
-                        <a href={r.url} target="_blank" rel="noopener noreferrer">
-                          Link
-                        </a>
-                      </td>
-                      <td>{r.aiModel}</td>
-                      <td><ReactMarkdown>{r.verdict}</ReactMarkdown></td>
-                      <td>{r.shortlistFlag ? "✅" : "❌"}</td>
-                    </tr>
-                  ))}
+                  {expandedJobs[key] &&
+                    reviews.map((r, i) => (
+                      <tr key={i} style={{ backgroundColor: "#f9f9f9" }}>
+                        <td></td>
+                        <td>{formatDaysAgo(r.createdAt)}</td>
+                        <td>{r.title}</td>
+                        <td>{r.company}</td>
+                        <td>
+                          <a
+                            href={r.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Link
+                          </a>
+                        </td>
+                        <td>{r.aiModel}</td>
+                        <td>
+                          <ReactMarkdown>{r.verdict}</ReactMarkdown>
+                        </td>
+                        <td>{r.shortlistFlag ? "✅" : "❌"}</td>
+                      </tr>
+                    ))}
                 </React.Fragment>
               );
             })}
